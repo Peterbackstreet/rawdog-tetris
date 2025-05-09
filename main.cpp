@@ -1,6 +1,7 @@
 #include "include/raylib.h"
+#include <cstdlib>
 #include <iostream>
-#include <utility>
+#include <random>
 #include <vector>
 #include <unordered_map>
 #include <string>
@@ -44,13 +45,13 @@ class Piece {
       // 1: ....##....
       // 2: ..........
       // 3: ..........
-      {'J', { {0,4}, {1,4}, {1,5}, {1,6} }},
+      {'J', { {0,3}, {1,3}, {1,4}, {1,5} }},
       //    0123456789
       // 0: ...#......
       // 1: ...###....
       // 2: ..........
       // 3: ..........
-      {'L', { {0,6}, {1,4}, {1,5}, {1,6}}}
+      {'L', { {0,5}, {1,3}, {1,4}, {1,5}}}
       //    0123456789
       // 0: .....#....
       // 1: ...###....
@@ -88,11 +89,19 @@ class Game {
 };
 
 int main() {
+  srand(time(NULL));//this is important when doing random (the seed will be the same no matter what if its pre-compiled)
+                    //
+  vector<char> piece_type = {'I','O','S','Z','J','L'};
   float grid_width = 10 * grid_size;
   float grid_height = 20 * grid_size;
+
   InitWindow(grid_width + offset_side, grid_height + offset_top, "hello raylib");
   SetTargetFPS(60);
-  Piece piece('I');
+
+  int ran = rand() % 6;
+  char type = piece_type[ran];
+
+  Piece piece(type);
 
   while (!WindowShouldClose()) {
     BeginDrawing();
