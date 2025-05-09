@@ -64,6 +64,10 @@ unordered_map<char,Color> colors = {
   {'L', {255, 158, 84, 255}}
 };
 
+bool compareColor(Color a, Color b) {
+  return a.r == b.r && a.g == b.g && a.b == b.b;
+}
+
 bool checkGameTick() {
   double gameTime = GetTime();
   if (gameTime - previousTick >= tickTime) {
@@ -93,8 +97,6 @@ class Piece {
       color = colors[pieceName];
       depth = 0;
       side = 0;
-      for (Vector2 part : parts[pieceName]) {
-      }
     }
 
     void drawPiece() {
@@ -105,23 +107,24 @@ class Piece {
       }
     }
 
-    void drawBoard() {
+    void paintBoard() {
       for (Vector2 part : parts[pieceName]) {
         board[part.y+side][part.x+depth-1] = color;
       }
-      reset();
     }
 
-    void draw() {
+    void isValidFall() {
       for (Vector2 part : parts[pieceName]) {
         float horizontal = (part.y+side) * grid_size + (float)offset_side/2;
         float vertical = (part.x+depth - 2) * grid_size + (float)offset_top/2;
-        if (part.x+depth > 21) {
-          drawBoard();
+        cout << part.x <<" " << part.y << " " << depth << endl;
+        if (part.x+depth > 21 || !compareColor(board[part.y][part.x+depth], WHITE)) {
+          paintBoard();
+          reset();
           return;
         }
       }
-      drawPiece();
+      depth++;
     }
 };
 
@@ -133,8 +136,7 @@ class Game {
   public:
 
     void makePieceFall(Piece& piece) {
-      if(piece.depth <21) piece.depth++;
-      else piece.reset();
+      piece.isValidFall();
     }
     void update(Piece& piece) {
       getInput();
@@ -151,7 +153,7 @@ class Game {
 
     void draw(Piece piece) {
       drawBoard();
-      piece.draw();
+      piece.drawPiece();
     }
 };
 
