@@ -95,14 +95,15 @@ class Piece {
       int ran = rand() % 6;
       this->pieceName = piece_type[ran];
       color = colors[pieceName];
-      depth = 0;
+      depth = 1;
       side = 0;
+      cout << "reset\n";
     }
 
     void drawPiece() {
       for (Vector2 part : parts[pieceName]) {
         float horizontal = (part.y+side) * grid_size + (float)offset_side/2;
-        float vertical = (part.x+depth - 2) * grid_size + (float)offset_top/2;
+        float vertical = (part.x+depth - 3) * grid_size + (float)offset_top/2;
         DrawRectangle(horizontal, vertical, grid_size, grid_size, color);
       }
     }
@@ -114,10 +115,8 @@ class Piece {
     }
 
     void isValidFall() {
+      // cout << depth << endl;
       for (Vector2 part : parts[pieceName]) {
-        float horizontal = (part.y+side) * grid_size + (float)offset_side/2;
-        float vertical = (part.x+depth - 2) * grid_size + (float)offset_top/2;
-        cout << part.x <<" " << part.y << " " << depth << endl;
         if (part.x+depth > 21 || !compareColor(board[part.y][part.x+depth], WHITE)) {
           paintBoard();
           reset();
@@ -129,7 +128,7 @@ class Piece {
 };
 
 void getInput() {
-  if(IsKeyPressed(KEY_DOWN)) tickTime = 0.1;
+  if(IsKeyPressed(KEY_DOWN)) tickTime = 0.05;
 }
 
 class Game {
