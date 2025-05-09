@@ -1,0 +1,6 @@
+1-make a 10x20 board
+2-make a frame surrouding the board
+3-make a template for all the piece(as a class or smtn)
+4-make the pieces fall it hits the floor and stop
+
+that's it for now
