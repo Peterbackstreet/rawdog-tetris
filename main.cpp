@@ -7,7 +7,7 @@
 
 using namespace std;
 
-vector<vector<Color>> board(10,vector<Color>(22 , WHITE));
+vector<vector<Color>> board(22,vector<Color>(10 , WHITE));
 
 int grid_size = 40;
 int offset_side = 300;
@@ -100,12 +100,13 @@ class Piece {
     }
 
     void reset() {
+      checkLineClear();
       int ran = rand() % 7;
       this->pieceName = piece_type[ran];
       color = colors[pieceName];
       depth = 0;
       side = 0;
-      stallingTick = 3;
+      stallingTick = 10;
       cout << "reset\n";
     }
 
@@ -119,14 +120,26 @@ class Piece {
 
     void paintBoard() {
       for (Vector2 part : parts[pieceName]) {
-        board[part.y+side][part.x+depth] = color;
+        board[part.x+depth][part.y+side] = color;
+      }
+    }
+    
+    void clearLine(int x) {
+      for (int i=0; i<10; i++) {
+        // if(board[][])
       }
     }
 
-    void fall() {
-      // cout << depth << endl;
+    void checkLineClear() {
       for (Vector2 part : parts[pieceName]) {
-        if (part.x+depth+1 > 21 || !compareColor(board[part.y+side][part.x+depth+1], WHITE)) {
+        clearLine(part.x+depth);
+      }
+    }
+
+    //everytime dealing with the board array the x and y is flipped
+    void fall() {
+      for (Vector2 part : parts[pieceName]) {
+        if (part.x+depth+1 > 21 || !compareColor(board[part.x+depth+1][part.y+side], WHITE)) {
           stallingTick--;
           if(stallingTick<=0) {
             paintBoard();
@@ -140,7 +153,7 @@ class Piece {
 
     void move(int direction) {
       for (Vector2 part : parts[pieceName]) {
-        if (part.y+side+direction < 0 || part.y+side+direction > 9 || depth <= -1 || !compareColor(board[part.y+side+direction][part.x+depth], WHITE)) return;
+        if (part.y+side+direction < 0 || part.y+side+direction > 9 || depth <= -1 || !compareColor(board[part.x+depth][part.y+side+direction], WHITE)) return;
       }
       side+=direction;
     }
@@ -166,10 +179,11 @@ class Game {
     void drawBoard() {
       for (int i = 2; i < 22; i++) {
         for (int j=0; j < 10; j++) {
-          DrawRectangle(j * grid_size + offset_side/2, (i-2) * grid_size + offset_top/2, grid_size, grid_size, board[j][i]);
+          DrawRectangle(j * grid_size + offset_side/2, (i-2) * grid_size + offset_top/2, grid_size, grid_size, board[i][j]);
         }
       }
     }
+
 
     void draw(Piece piece) {
       drawBoard();
