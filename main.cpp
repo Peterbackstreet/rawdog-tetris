@@ -100,7 +100,6 @@ class Piece {
     }
 
     void reset() {
-      checkLineClear();
       int ran = rand() % 7;
       this->pieceName = piece_type[ran];
       color = colors[pieceName];
@@ -125,14 +124,27 @@ class Piece {
     }
     
     void clearLine(int x) {
-      for (int i=0; i<10; i++) {
-        // if(board[][])
+      if(x<2) return;
+      for (int i=0; i<10 ; i++) {
+        board[x][i] = board[x-1][i];
       }
+      clearLine(x-1);
     }
 
     void checkLineClear() {
+      int clearCnt = 0;
       for (Vector2 part : parts[pieceName]) {
-        clearLine(part.x+depth);
+        bool foundWhite = false;
+        for (int i=0; i<10; i++) {
+          if(compareColor(board[part.x+depth+clearCnt][i], WHITE)) {
+            foundWhite = true;
+            break;
+          }
+        }
+          if(foundWhite) continue;
+          cout << "clear\n";
+          clearLine(part.x+depth+clearCnt);
+          clearCnt--;
       }
     }
 
@@ -143,6 +155,7 @@ class Piece {
           stallingTick--;
           if(stallingTick<=0) {
             paintBoard();
+            checkLineClear();
             reset();
           }
           return;
