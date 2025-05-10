@@ -47,10 +47,16 @@ unordered_map<char, vector<Vector2>> parts = {
   // 1: ...###....
   // 2: ..........
   // 3: ..........
-  {'L', { {0,5}, {1,3}, {1,4}, {1,5}}}
+  {'L', { {0,5}, {1,3}, {1,4}, {1,5}}},
   //    0123456789
   // 0: .....#....
   // 1: ...###....
+  // 2: ..........
+  // 3: ..........
+  {'T', { {0,5}, {1,4}, {1,5}, {1,6}}}
+  //    0123456789
+  // 0: .....#....
+  // 1: ....###...
   // 2: ..........
   // 3: ..........
 };
@@ -61,7 +67,8 @@ unordered_map<char,Color> colors = {
   {'S', {250, 90, 120, 255}},
   {'Z', {100, 255, 160, 255}},
   {'J', {34, 109, 230, 255}},
-  {'L', {255, 158, 84, 255}}
+  {'L', {255, 158, 84, 255}},
+  {'T', {214, 13, 214, 255}}
 };
 
 bool compareColor(Color a, Color b) {
@@ -81,64 +88,78 @@ Color BG = Color{187, 237, 221, 255};
 
 class Piece {
   public:
-    vector<char> piece_type = {'I','O','S','Z','J','L'};
+    vector<char> piece_type = {'I','O','S','Z','J','L','T'};
     char pieceName;
     Color color;
     int depth = 0;
     int side = 0;
+    int stallingTick = 3;
 
     Piece() {
       reset();
     }
 
     void reset() {
-      int ran = rand() % 6;
+      int ran = rand() % 7;
       this->pieceName = piece_type[ran];
       color = colors[pieceName];
-      depth = 1;
+      depth = 0;
       side = 0;
+      stallingTick = 3;
       cout << "reset\n";
     }
 
     void drawPiece() {
       for (Vector2 part : parts[pieceName]) {
         float horizontal = (part.y+side) * grid_size + (float)offset_side/2;
-        float vertical = (part.x+depth - 3) * grid_size + (float)offset_top/2;
+        float vertical = (part.x+depth - 2) * grid_size + (float)offset_top/2;
         DrawRectangle(horizontal, vertical, grid_size, grid_size, color);
       }
     }
 
     void paintBoard() {
       for (Vector2 part : parts[pieceName]) {
-        board[part.y+side][part.x+depth-1] = color;
+        board[part.y+side][part.x+depth] = color;
       }
     }
 
-    void isValidFall() {
+    void fall() {
       // cout << depth << endl;
       for (Vector2 part : parts[pieceName]) {
-        if (part.x+depth > 21 || !compareColor(board[part.y][part.x+depth], WHITE)) {
-          paintBoard();
-          reset();
+        if (part.x+depth+1 > 21 || !compareColor(board[part.y+side][part.x+depth+1], WHITE)) {
+          stallingTick--;
+          if(stallingTick<=0) {
+            paintBoard();
+            reset();
+          }
           return;
         }
       }
       depth++;
     }
+
+    void move(int direction) {
+      for (Vector2 part : parts[pieceName]) {
+        if (part.y+side+direction < 0 || part.y+side+direction > 9 || depth <= -1 || !compareColor(board[part.y+side+direction][part.x+depth], WHITE)) return;
+      }
+      side+=direction;
+    }
 };
 
-void getInput() {
-  if(IsKeyPressed(KEY_DOWN)) tickTime = 0.05;
+void getInput(Piece& piece) {
+  if(IsKeyPressed(KEY_DOWN)) tickTime = 0.1;
+  if(IsKeyPressed(KEY_LEFT)) piece.move(-1);
+  if(IsKeyPressed(KEY_RIGHT)) piece.move(1);
 }
 
 class Game {
   public:
 
     void makePieceFall(Piece& piece) {
-      piece.isValidFall();
+      piece.fall();
     }
     void update(Piece& piece) {
-      getInput();
+      getInput(piece);
       if (checkGameTick()) makePieceFall(piece);
     }
 
