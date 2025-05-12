@@ -17,14 +17,14 @@ double tickTime = 0.2;
 double previousInputTick = 0;
 double inputTime = 0.05;
 
-unordered_map<char, vector<Vector2>> parts = {
+unordered_map<char, vector<Vector2>> parts_template = {
   {'I', { {1,0}, {1,1}, {1,2}, {1,3} }},
   {'O', { {0,1}, {0,2}, {1,1}, {1,2} }},
   {'S', { {0,1}, {0,2}, {1,0}, {1,1} }},
   {'Z', { {0,0}, {0,1}, {1,1}, {1,2} }},
   {'J', { {0,0}, {1,0}, {1,1}, {1,2} }},
-  {'L', { {0,2}, {1,0}, {1,1}, {1,2}}},
-  {'T', { {0,1}, {1,0}, {1,1}, {1,2}}}
+  {'L', { {0,2}, {1,0}, {1,1}, {1,2} }},
+  {'T', { {0,1}, {1,0}, {1,1}, {1,2} }}
 };
 
 unordered_map<char,Color> colors = { 
@@ -64,6 +64,7 @@ Color BG = Color{187, 237, 221, 255};
 class Piece {
   public:
     vector<char> piece_type = {'I','O','S','Z','J','L','T'};
+    vector<Vector2> parts;
     char pieceName;
     Color color;
     int depth;
@@ -77,7 +78,8 @@ class Piece {
 
     void reset() {
       int ran = rand() % 7;
-      this->pieceName = piece_type[ran];
+      pieceName = piece_type[ran];
+      parts = parts_template[pieceName];
       color = colors[pieceName];
       depth = 0;
       side = 3;
@@ -86,7 +88,7 @@ class Piece {
     }
 
     void drawPiece() {
-      for (Vector2 part : parts[pieceName]) {
+      for (Vector2 part : parts) {
         float horizontal = (part.y+side) * grid_size + (float)offset_side/2;
         float vertical = (part.x+depth - 2) * grid_size + (float)offset_top/2;
         DrawRectangle(horizontal, vertical, grid_size, grid_size, color);
@@ -94,11 +96,11 @@ class Piece {
     }
 
     void paintBoard() {
-      for (Vector2 part : parts[pieceName]) {
+      for (Vector2 part : parts) {
         board[part.x+depth][part.y+side] = color;
       }
     }
-    
+
     void clearLine(int x) {
       if(x<2) return;
       for (int i=0; i<10 ; i++) {
@@ -109,7 +111,7 @@ class Piece {
 
     void checkLineClear() {
       int clearCnt = 0;
-      for (Vector2 part : parts[pieceName]) {
+      for (Vector2 part : parts) {
         bool foundWhite = false;
         for (int i=0; i<10; i++) {
           if(compareColor(board[part.x+depth+clearCnt][i], WHITE)) {
@@ -117,15 +119,15 @@ class Piece {
             break;
           }
         }
-          if(foundWhite) continue;
-          clearLine(part.x+depth+clearCnt);
-          clearCnt--;
+        if(foundWhite) continue;
+        clearLine(part.x+depth+clearCnt);
+        clearCnt--;
       }
     }
 
     //everytime dealing with the board array the x and y is flipped
     void fall() {
-      for (Vector2 part : parts[pieceName]) {
+      for (Vector2 part : parts) {
         if (part.x+depth+1 > 21 || !compareColor(board[part.x+depth+1][part.y+side], WHITE)) {
           onTop = true;
           stallingTick--;
@@ -142,29 +144,46 @@ class Piece {
     }
 
     void move(int direction) {
-      for (Vector2 part : parts[pieceName]) {
+      for (Vector2 part : parts) {
         if (part.y+side+direction < 0 || part.y+side+direction > 9 || depth <= -1 || !compareColor(board[part.x+depth][part.y+side+direction], WHITE)) return;
       }
       side+=direction;
     }
+
+    void spin() {
+      if (pieceName == 'O') return;
+      int dimension = (pieceName == 'I') ? 3 : 2;
+      for (Vector2 &part : parts) {
+        int x = part.y;
+        int y = dimension-part.x;
+        part.x = x;
+        part.y = y;
+      }
+    }
 };
 
-void getInput(Piece& piece) {
-  if(IsKeyDown(KEY_DOWN) && !piece.onTop) tickTime = 0.05;
-  else tickTime = 0.2;
-  if(IsKeyDown(KEY_LEFT)) piece.move(-1);
-  if(IsKeyDown(KEY_RIGHT)) piece.move(1);
-}
+
 
 class Game {
   public:
+    void getInputOnTick(Piece& piece) {
+      if(IsKeyDown(KEY_DOWN) && !piece.onTop) tickTime = 0.05;
+      else tickTime = 0.2;
+      if(IsKeyDown(KEY_LEFT)) piece.move(-1);
+      if(IsKeyDown(KEY_RIGHT)) piece.move(1);
+    }
+
+    void getInput(Piece &piece) {
+      if(IsKeyPressed(KEY_UP)) piece.spin();
+    }
 
     void makePieceFall(Piece& piece) {
       piece.fall();
     }
     void update(Piece& piece) {
-      if (checkInputTick()) getInput(piece);
+      if (checkInputTick()) getInputOnTick(piece);
       if (checkGameTick()) makePieceFall(piece);
+      getInput(piece);
     }
 
     void drawBoard() {
