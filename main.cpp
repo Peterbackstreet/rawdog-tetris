@@ -17,6 +17,11 @@ double tickTime = 0.5;
 double previousInputTick = 0;
 double inputTime = 0.05;
 
+bool holdLeft = false;
+bool holdRight = false;
+double holdThreshold = 0.3;
+double holdTime = 0;
+
 unordered_map<char, vector<Vector2>> parts_template = {
   {'I', { {1,0}, {1,1}, {1,2}, {1,3} }},
   {'O', { {0,1}, {0,2}, {1,1}, {1,2} }},
@@ -54,6 +59,14 @@ bool checkInputTick() {
   double gameTime = GetTime();
   if (gameTime - previousInputTick >= inputTime) {
     previousInputTick = gameTime;
+    return true;
+  }
+  return false;
+}
+
+bool checkholdTick() {
+  double gameTime = GetTime();
+  if (gameTime - holdTime >= holdThreshold) {
     return true;
   }
   return false;
@@ -216,11 +229,25 @@ class Game {
     void getInputOnTick(Piece& piece) {
       if(IsKeyDown(KEY_DOWN) && !piece.onTop) tickTime = 0.05;
       else tickTime = 0.2;
-      if(IsKeyDown(KEY_LEFT)) piece.move(-1);
-      if(IsKeyDown(KEY_RIGHT)) piece.move(1);
+      if(holdLeft && checkholdTick()) piece.move(-1);
+      if(holdRight && checkholdTick()) piece.move(1);
     }
 
     void getInput(Piece &piece) {
+      if(IsKeyPressed(KEY_LEFT)) {
+        holdLeft = true;
+        piece.move(-1);
+        holdTime = GetTime();
+      }
+      if (IsKeyUp(KEY_LEFT)) holdLeft = false;
+
+      if(IsKeyPressed(KEY_RIGHT)) {
+        holdRight = true;
+        piece.move(1);
+        holdTime = GetTime();
+      }
+      if (IsKeyUp(KEY_RIGHT)) holdRight = false;
+
       if(IsKeyPressed(KEY_UP)) piece.spin(false);
       if(IsKeyPressed(KEY_LEFT_CONTROL)) piece.spin(true);
       if(IsKeyPressed(KEY_SPACE)) piece.hardDrop();
