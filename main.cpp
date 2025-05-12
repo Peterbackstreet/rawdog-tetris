@@ -114,7 +114,7 @@ class Piece {
       for (Vector2 part : parts) {
         height.insert(part.x);
       }
-        
+
       for (int x : height) {
         bool foundWhite = false;
         for (int i=0; i<10; i++) {
@@ -160,7 +160,20 @@ class Piece {
       for (Vector2 part : parts) {
         int x = part.y+depth;
         int y = dimension-part.x+side;
-        if(y < 0 || y > 9 || x > 21) return;
+        if(y < 0 || y > 9) {
+          int direction = (y<0) ? 1 : -1;
+          for (Vector2 part : parts) {
+            if (!compareColor(board[part.x+depth][part.y+side+direction], WHITE)) return;
+          }
+          side+=direction;
+        }
+
+        if(x > 21) {
+          for (Vector2 part : parts) {
+            if (!compareColor(board[part.x+depth-1][part.y+side], WHITE)) return;
+          }
+          depth-=1;
+        }
       }
       for (Vector2 &part : parts) {
         int x = part.y;
