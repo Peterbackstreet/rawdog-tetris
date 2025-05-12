@@ -13,7 +13,7 @@ int offset_side = 300;
 int offset_top = 200;
 
 double previousTick = 0;
-double tickTime = 0.2;
+double tickTime = 0.5;
 double previousInputTick = 0;
 double inputTime = 0.05;
 
@@ -30,8 +30,8 @@ unordered_map<char, vector<Vector2>> parts_template = {
 unordered_map<char,Color> colors = { 
   {'I', {120, 200, 200, 255}},
   {'O', {240, 230, 90, 255}},
-  {'S', {250, 90, 120, 255}},
-  {'Z', {100, 255, 160, 255}},
+  {'Z', {250, 90, 120, 255}},
+  {'S', {100, 255, 160, 255}},
   {'J', {34, 109, 230, 255}},
   {'L', {255, 158, 84, 255}},
   {'T', {214, 13, 214, 255}}
@@ -153,31 +153,59 @@ class Piece {
       side+=direction;
     }
 
-    void spin() {
+    void spin(bool reverse) {
       if (pieceName == 'O') return;
 
       int dimension = (pieceName == 'I') ? 3 : 2;
-      for (Vector2 part : parts) {
-        int x = part.y+depth;
-        int y = dimension-part.x+side;
-        int deep = (x > 21) ? -1 : 0;
-        int direction;
-        if (y>=0 && y<10) direction = 0;
-        else direction = (y<0) ? 1 : -1;
+      int spinDirection = (reverse) ? -1 : 1;
 
+      vector<Vector2> offset = { {0,0}, {1,0}, {0,1}, {0,-1}, {-1,0} ,{0,2}, {0,-2}, {2,0}, {-2,0}};
+      int offsetX, offsetY;
+      for (Vector2 spin : offset) {
+        bool canSpin = false;
+        bool bek = false;
         for (Vector2 part : parts) {
-          if (!compareColor(board[x+deep][y+direction], WHITE)) return;
+          int x = part.y+depth+spin.x;
+          int y = dimension-part.x+side+spin.y;
+          if(x > 21 || y < 0 || y > 9 || !compareColor(board[x][y], WHITE)) {
+            bek = true;
+            break;
+          }
         }
-        if(y<0 || y>9) side += direction;
-        if(x>21) depth -= 1;
+        if (bek) continue;
+
+        canSpin = true;
+        swapXY(spinDirection, dimension, spin.x, spin.y);
+        return;
       }
 
+    }
+    void swapXY(int reverse, int dimension, int offsetX, int offsetY) {
       for (Vector2 &part : parts) {
-        int x = part.y;
-        int y = dimension-part.x;
+        int x = part.y+offsetX;
+        int y = dimension-part.x+offsetY;
         part.x = x;
         part.y = y;
       }
+    }
+
+    void hardDrop() {
+      int deep = 0;
+      while(1){
+        bool breakLoop = false;
+        for (Vector2 part : parts) {
+          if(part.x+depth+1 > 21 || !compareColor(board[part.x+depth+1][part.y+side], WHITE)) {
+            breakLoop = true;
+            break;
+          }
+        }
+        if(breakLoop) break;
+        depth++;
+      }
+
+      paintBoard();
+      checkLineClear();
+      reset();
     }
 };
 
@@ -193,7 +221,9 @@ class Game {
     }
 
     void getInput(Piece &piece) {
-      if(IsKeyPressed(KEY_UP)) piece.spin();
+      if(IsKeyPressed(KEY_UP)) piece.spin(false);
+      if(IsKeyPressed(KEY_LEFT_CONTROL)) piece.spin(true);
+      if(IsKeyPressed(KEY_SPACE)) piece.hardDrop();
     }
 
     void makePieceFall(Piece& piece) {
