@@ -1,6 +1,5 @@
 #include "include/raylib.h"
 #include <cstdlib>
-#include <iomanip>
 #include <iostream>
 #include <vector>
 #include <unordered_map>
@@ -14,51 +13,18 @@ int offset_side = 300;
 int offset_top = 200;
 
 double previousTick = 0;
-double tickTime = 1;
+double tickTime = 0.2;
+double previousInputTick = 0;
+double inputTime = 0.05;
 
 unordered_map<char, vector<Vector2>> parts = {
-  {'I', { {1,3}, {1,4}, {1,5}, {1,6} }},
-  //    0123456789
-  // 0: ..........
-  // 1: ...####...
-  // 2: ..........
-  // 3: ..........
-  {'O', { {0,4}, {0,5}, {1,4}, {1,5} }},
-  //    0123456789
-  // 0: ....##....
-  // 1: ....##....
-  // 2: ..........
-  // 3: ..........
-  {'S', { {0,4}, {0,5}, {1,3}, {1,4} }},
-  //    0123456789
-  // 0: ....##....
-  // 1: ...##.....
-  // 2: ..........
-  // 3: ..........
-  {'Z', { {0,3}, {0,4}, {1,4}, {1,5} }},
-  //    0123456789
-  // 0: ...##.....
-  // 1: ....##....
-  // 2: ..........
-  // 3: ..........
-  {'J', { {0,3}, {1,3}, {1,4}, {1,5} }},
-  //    0123456789
-  // 0: ...#......
-  // 1: ...###....
-  // 2: ..........
-  // 3: ..........
-  {'L', { {0,5}, {1,3}, {1,4}, {1,5}}},
-  //    0123456789
-  // 0: .....#....
-  // 1: ...###....
-  // 2: ..........
-  // 3: ..........
-  {'T', { {0,5}, {1,4}, {1,5}, {1,6}}}
-  //    0123456789
-  // 0: .....#....
-  // 1: ....###...
-  // 2: ..........
-  // 3: ..........
+  {'I', { {1,0}, {1,1}, {1,2}, {1,3} }},
+  {'O', { {0,1}, {0,2}, {1,1}, {1,2} }},
+  {'S', { {0,1}, {0,2}, {1,0}, {1,1} }},
+  {'Z', { {0,0}, {0,1}, {1,1}, {1,2} }},
+  {'J', { {0,0}, {1,0}, {1,1}, {1,2} }},
+  {'L', { {0,2}, {1,0}, {1,1}, {1,2}}},
+  {'T', { {0,1}, {1,0}, {1,1}, {1,2}}}
 };
 
 unordered_map<char,Color> colors = { 
@@ -84,6 +50,15 @@ bool checkGameTick() {
   return false;
 }
 
+bool checkInputTick() {
+  double gameTime = GetTime();
+  if (gameTime - previousInputTick >= inputTime) {
+    previousInputTick = gameTime;
+    return true;
+  }
+  return false;
+}
+
 Color BG = Color{187, 237, 221, 255};
 
 class Piece {
@@ -91,9 +66,10 @@ class Piece {
     vector<char> piece_type = {'I','O','S','Z','J','L','T'};
     char pieceName;
     Color color;
-    int depth = 0;
-    int side = 0;
-    int stallingTick = 3;
+    int depth;
+    int side;
+    int stallingTick;
+    bool onTop = false;
 
     Piece() {
       reset();
@@ -104,9 +80,9 @@ class Piece {
       this->pieceName = piece_type[ran];
       color = colors[pieceName];
       depth = 0;
-      side = 0;
-      stallingTick = 10;
-      cout << "reset\n";
+      side = 3;
+      stallingTick = 5;
+      onTop = false;
     }
 
     void drawPiece() {
@@ -142,7 +118,6 @@ class Piece {
           }
         }
           if(foundWhite) continue;
-          cout << "clear\n";
           clearLine(part.x+depth+clearCnt);
           clearCnt--;
       }
@@ -152,6 +127,7 @@ class Piece {
     void fall() {
       for (Vector2 part : parts[pieceName]) {
         if (part.x+depth+1 > 21 || !compareColor(board[part.x+depth+1][part.y+side], WHITE)) {
+          onTop = true;
           stallingTick--;
           if(stallingTick<=0) {
             paintBoard();
@@ -161,6 +137,7 @@ class Piece {
           return;
         }
       }
+      onTop = false;
       depth++;
     }
 
@@ -173,9 +150,10 @@ class Piece {
 };
 
 void getInput(Piece& piece) {
-  if(IsKeyPressed(KEY_DOWN)) tickTime = 0.1;
-  if(IsKeyPressed(KEY_LEFT)) piece.move(-1);
-  if(IsKeyPressed(KEY_RIGHT)) piece.move(1);
+  if(IsKeyDown(KEY_DOWN) && !piece.onTop) tickTime = 0.05;
+  else tickTime = 0.2;
+  if(IsKeyDown(KEY_LEFT)) piece.move(-1);
+  if(IsKeyDown(KEY_RIGHT)) piece.move(1);
 }
 
 class Game {
@@ -185,7 +163,7 @@ class Game {
       piece.fall();
     }
     void update(Piece& piece) {
-      getInput(piece);
+      if (checkInputTick()) getInput(piece);
       if (checkGameTick()) makePieceFall(piece);
     }
 
