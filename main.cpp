@@ -13,13 +13,13 @@ int offset_side = 300;
 int offset_top = 200;
 
 double previousTick = 0;
-double tickTime = 0.5;
+double tickTime = 10000;
 double previousInputTick = 0;
 double inputTime = 0.05;
 
 bool holdLeft = false;
 bool holdRight = false;
-double holdThreshold = 0.3;
+double holdThreshold = 0.2;
 double holdTime = 0;
 
 unordered_map<char, vector<Vector2>> parts_template = {
@@ -170,25 +170,25 @@ class Piece {
       if (pieceName == 'O') return;
 
       int dimension = (pieceName == 'I') ? 3 : 2;
-      int spinDirection = (reverse) ? -1 : 1;
 
       vector<Vector2> offset = { {0,0}, {1,0}, {0,1}, {0,-1}, {-1,0} ,{0,2}, {0,-2}, {2,0}, {-2,0}};
       int offsetX, offsetY;
       for (Vector2 spin : offset) {
-        bool canSpin = false;
-        bool bek = false;
+        bool breakLoop = false;
         for (Vector2 part : parts) {
           int x = part.y+depth+spin.x;
           int y = dimension-part.x+side+spin.y;
+          if(reverse) {
+            x = dimension-part.y+depth+spin.x;
+            y = part.x+side+spin.y;
+          }
           if(x > 21 || y < 0 || y > 9 || !compareColor(board[x][y], WHITE)) {
-            bek = true;
+            breakLoop= true;
             break;
           }
         }
-        if (bek) continue;
-
-        canSpin = true;
-        swapXY(spinDirection, dimension, spin.x, spin.y);
+        if (breakLoop) continue;
+        swapXY(reverse, dimension, spin.x, spin.y);
         return;
       }
 
@@ -197,6 +197,10 @@ class Piece {
       for (Vector2 &part : parts) {
         int x = part.y+offsetX;
         int y = dimension-part.x+offsetY;
+        if(reverse) {
+          x = dimension-part.y+offsetX;
+          y = part.x+offsetY;
+        }
         part.x = x;
         part.y = y;
       }
