@@ -1,8 +1,8 @@
 #include "include/raylib.h"
-#include <cstdlib>
 #include <iostream>
 #include <vector>
 #include <unordered_map>
+#include <set>
 
 using namespace std;
 
@@ -110,18 +110,21 @@ class Piece {
     }
 
     void checkLineClear() {
-      int clearCnt = 0;
+      set<int> height;
       for (Vector2 part : parts) {
+        height.insert(part.x);
+      }
+        
+      for (int x : height) {
         bool foundWhite = false;
         for (int i=0; i<10; i++) {
-          if(compareColor(board[part.x+depth+clearCnt][i], WHITE)) {
+          if(compareColor(board[x+depth][i], WHITE)) {
             foundWhite = true;
             break;
           }
         }
         if(foundWhite) continue;
-        clearLine(part.x+depth+clearCnt);
-        clearCnt--;
+        clearLine(x+depth);
       }
     }
 
