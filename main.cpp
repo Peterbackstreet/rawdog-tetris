@@ -160,21 +160,18 @@ class Piece {
       for (Vector2 part : parts) {
         int x = part.y+depth;
         int y = dimension-part.x+side;
-        if(y < 0 || y > 9) {
-          int direction = (y<0) ? 1 : -1;
-          for (Vector2 part : parts) {
-            if (!compareColor(board[part.x+depth][part.y+side+direction], WHITE)) return;
-          }
-          side+=direction;
-        }
+        int deep = (x > 21) ? -1 : 0;
+        int direction;
+        if (y>=0 && y<10) direction = 0;
+        else direction = (y<0) ? 1 : -1;
 
-        if(x > 21) {
-          for (Vector2 part : parts) {
-            if (!compareColor(board[part.x+depth-1][part.y+side], WHITE)) return;
-          }
-          depth-=1;
+        for (Vector2 part : parts) {
+          if (!compareColor(board[x+deep][y+direction], WHITE)) return;
         }
+        if(y<0 || y>9) side += direction;
+        if(x>21) depth -= 1;
       }
+
       for (Vector2 &part : parts) {
         int x = part.y;
         int y = dimension-part.x;
