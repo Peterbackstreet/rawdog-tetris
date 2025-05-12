@@ -152,7 +152,13 @@ class Piece {
 
     void spin() {
       if (pieceName == 'O') return;
+
       int dimension = (pieceName == 'I') ? 3 : 2;
+      for (Vector2 part : parts) {
+        int x = part.y+depth;
+        int y = dimension-part.x+side;
+        if(y < 0 || y > 9 || x > 21) return;
+      }
       for (Vector2 &part : parts) {
         int x = part.y;
         int y = dimension-part.x;
